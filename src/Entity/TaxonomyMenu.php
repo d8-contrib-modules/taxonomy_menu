@@ -87,54 +87,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    * @return array
    */
   public function generateTaxonomyLinks($base_plugin_definition) {
-    $links = [];
 
-    // Load taxonomy terms for tax menu vocab.
-    $terms = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree($this->getVocabulary());
-
-    $taxonomy_menu_id = $this->id();
-
-    // Create menu links for each term in the vocabulary.
-    foreach ($terms as $term_data) {
-      // Load the actual term entity for full info (does not contain parents).
-      $term = \Drupal\taxonomy\Entity\Term::load($term_data->tid);
-
-      $term_id = $term->id();
-      $term_url = $term->urlInfo();
-
-      // Uniquely identify this menu link.
-      $menu_link_id = 'taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $term_id;
-
-      // Determine parent link.
-      // TODO: Evaluate use case of multiple parents (should we make many menu items?)
-      $menu_parent_id = NULL;
-      if (is_array($term_data->parents) and $term_data->parents[0] != '0') {
-        $menu_parent_id = 'taxonomy_menu.menu_link:taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $term_data->parents[0];
-      }
-
-      // TODO: Consider implementing a forced weight based on taxonomy tree.
-
-      // Generate link.
-      $arguments = ['taxonomy_term' => $term_id];
-
-      $links[$menu_link_id] = $base_plugin_definition;
-
-      $links[$menu_link_id] += array(
-        'id' => $menu_link_id,
-        'title' => $term->label(),
-        'description' => $term->getDescription(),
-        'menu_name' => $this->getMenu(),
-        'metadata' => array(
-          'taxonomy_menu_id' => $taxonomy_menu_id,
-        ),
-        'route_name' => $term_url->getRouteName(),
-        'route_parameters' => $term_url->getRouteParameters(),
-        'load arguments'  => $arguments,
-        'parent' => $menu_parent_id,
-      );
-
-    }
-
-    return $links;
+    return \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTaxonomyMenuLinks($this, $base_plugin_definition);
   }
 }
